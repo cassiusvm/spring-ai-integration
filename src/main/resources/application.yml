@@ -7,3 +7,6 @@ spring:
       chat:
         options:
           model: gpt-4o
+  threads:
+    virtual:
+      enabled: true
