@@ -22,16 +22,14 @@ public class RecipeChefController {
 
     public RecipeChefController(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();
-        this.conversation = new ArrayList<>();
-        final String systemMessageString = """
-        Suggest sea food recipe.
-        If someone asks about something else, just say I don't know.
-        """;
-        final SystemMessage systemMessage = new SystemMessage(systemMessageString);
-        this.conversation.add(systemMessage);
-
+        this.conversation = initializeConversation();
     }
 
+    /**
+     * Endpoint para sugestão de receitas baseado em mensagens do usuário.
+     * @param message Mensagem enviada pelo usuário (padrão: "Suggest a recipe for dinner").
+     * @return Resposta gerada pelo assistente.
+     */
     @GetMapping("/suggest-recipe")
     public String suggestRecipe(
             @RequestParam(
@@ -39,15 +37,40 @@ public class RecipeChefController {
                     defaultValue = "Suggest a recipe for dinner"
             ) String message
     ) {
-        final Message userMessage = new UserMessage(message);
+        return processUserMessage(message);
+    }
+
+    /**
+     * Inicializa a conversa com uma mensagem de sistema padrão.
+     * @return Lista contendo a mensagem de sistema inicial.
+     */
+    private List<Message> initializeConversation() {
+        List<Message> initialConversation = new ArrayList<>();
+        String systemMessage = """
+            Suggest sea food recipe.
+            If someone asks about something else, just say I don't know.
+            """;
+        initialConversation.add(new SystemMessage(systemMessage));
+        return initialConversation;
+    }
+
+    /**
+     * Processa a mensagem do usuário, obtém a resposta do assistente e atualiza a conversa.
+     * @param userInput Mensagem enviada pelo usuário.
+     * @return Resposta gerada pelo modelo.
+     */
+    private String processUserMessage(String userInput) {
+        Message userMessage = new UserMessage(userInput);
         this.conversation.add(userMessage);
 
         String modelResponse = this.chatClient.prompt()
                 .messages(this.conversation)
                 .call()
                 .content();
-        final Message assistantMessage = new AssistantMessage(modelResponse);
+
+        Message assistantMessage = new AssistantMessage(modelResponse);
         this.conversation.add(assistantMessage);
+
         return modelResponse;
     }
 }

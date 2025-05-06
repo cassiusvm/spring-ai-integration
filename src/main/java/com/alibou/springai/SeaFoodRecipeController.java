@@ -10,6 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/recipes/sea-food")
 public class SeaFoodRecipeController {
 
+    private static final String DEFAULT_MESSAGE = "Suggest a recipe for dinner";
+    private static final String SYSTEM_MESSAGE = """
+        Suggest sea food recipe.
+        If someone asks about something else, just say I don't know.
+        """;
+
     private final ChatClient chatClient;
 
     public SeaFoodRecipeController(ChatClient.Builder chatClientBuilder) {
@@ -20,18 +26,17 @@ public class SeaFoodRecipeController {
     public String suggestRecipe(
             @RequestParam(
                     name = "message",
-                    defaultValue = "Suggest a recipe for dinner"
+                    defaultValue = DEFAULT_MESSAGE
             ) String message
     ) {
-        final String systemMessage = """
-        Suggest sea food recipe.
-        If someone asks about something else, just say I don't know.
-        """;
+        return getSeaFoodRecipeSuggestions(message);
+    }
+
+    private String getSeaFoodRecipeSuggestions(String userMessage) {
         return this.chatClient.prompt()
-                .system(c -> c.text(systemMessage))
-                .user(message)
+                .system(c -> c.text(SYSTEM_MESSAGE))
+                .user(userMessage)
                 .call()
                 .content();
     }
-
 }
